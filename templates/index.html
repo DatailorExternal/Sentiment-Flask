@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Sentiment Analysis</title>
+  <style>
+    h1{font-size:4rem;}
+    h2{font-size:2.5rem;}
+    body {background-color: #e0f1ff;}
+    .classification-btn{font-size: 1.5rem; cursor: pointer; border:1px solid black; padding: 2px 2px 2px 2px; background-color:#999; color:white;}
+    .classification-btn:hover{background-color:#6b6b6b}
+    </style>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+</head>
+
+<body>
+  <div class="container">
+    <h1>
+      <center>Sentiment Analysis</center>
+    </h1>
+    <center><form method="POST" action="predict" enctype="multipart/form-data" id="classificationForm">
+      <p><input type="file"  accept=".csv" name="file" id="file"  style="display: none;"></p>
+      <p><label class="classification-btn" for="file">Upload CSV</label></p>
+      <p><input type="submit" value="Submit" id="submit" style="display: none;"></p>
+      <p><label class="classification-btn" for="submit">Predict</label></p>
+      
+    </form>
+  </center>
+    
+  </div >
+  <center id="tbl">
+    <h2 style="display:none" id="positive"></h2>
+  <div style="display:none" id="spinner" class="spinner-border" role="status">
+  <span class="sr-only">Loading...</span>
+  </div>
+  </center>
+  <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+</body>
+<script src="https://code.jquery.com/jquery-3.5.1.js"
+integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
+crossorigin="anonymous"></script>
+
+<script>
+  $(document).ready(function (e) {
+    $('#classificationForm').on('submit',(function(e) {
+        e.preventDefault();
+        $('#spinner').css('display','block')
+        var formData = new FormData(this);
+
+        $.ajax({
+            type:'POST',
+            url: $(this).attr('action'),
+            data:formData,
+            cache:false,
+            contentType: false,
+            processData: false,
+            success:function(data){
+                $('#spinner').css('display','none')
+                console.log("success");
+                console.log(data);
+                var keys = Object.keys(data[0])
+                generateTable(keys, data)
+
+            },
+            error: function(data){
+                console.log("error");
+                console.log(data);
+            }
+        });
+    }));
+  });
+  function generateTable(keys, data){
+    var center = document.getElementById("tbl")
+    console.log(center)
+    var tbl = document.createElement("table")
+    tbl.style.tableLayout = 'fixed';
+    tbl.style.border = '1px solid black';
+    tbl.className = "table table-bordered table-condensed horizontal-center";
+    var thead = tbl.createTHead();
+    var row = thead.insertRow();
+    row.style.fontSize = "30px";
+    for (let i = 0; i < keys.length; i++){
+      var th = document.createElement("th");
+      th.scope = "col";
+      th.appendChild(document.createTextNode(keys[i]));
+      row.appendChild(th);
+    }
+
+    var ar = [0,0];
+    for (let element of data) {
+      let row = tbl.insertRow();
+      row.style.fontSize = "20px";
+      for (key in element) {
+        var i = parseInt(element[key])
+        if (!isNaN(i)) {
+          if (i==1) {
+            ar[0]++;
+          }
+          if (i==0) {
+            ar[1]++;
+          }
+        }
+
+        let cell = row.insertCell();
+        let text = document.createTextNode(element[key]);
+        cell.appendChild(text);
+      }
+    }
+    $('#positive').css('display','block')
+    $('#positive').html("Pozitif: " + ar[0] + " Negatif: " + ar[1])
+    center.appendChild(tbl)
+  }
+
+
+</script>
+</html>
